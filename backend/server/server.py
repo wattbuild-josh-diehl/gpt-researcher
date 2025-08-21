@@ -18,7 +18,7 @@ from backend.server.server_utils import (
 )
 
 from backend.server.websocket_manager import run_agent
-from backend.utils import write_md_to_word, write_md_to_pdf
+from backend.utils import write_md_to_word, write_md_to_pdf, write_text_to_md
 from gpt_researcher.utils.logging_config import setup_research_logging
 from gpt_researcher.utils.enum import Tone
 from backend.chat.chat import ChatAgentWithMemory
@@ -51,6 +51,8 @@ class ResearchRequest(BaseModel):
     repo_name: str
     branch_name: str
     generate_in_background: bool = True
+    report_formats: List[str] = ["markdown"]
+    report_formats: List[str] = ["markdown"]
 
 
 class ConfigRequest(BaseModel):
@@ -137,8 +139,14 @@ async def write_report(research_request: ResearchRequest, research_id: str = Non
         return_researcher=True
     )
 
-    docx_path = await write_md_to_word(report_information[0], research_id)
-    pdf_path = await write_md_to_pdf(report_information[0], research_id)
+    report_output = {}
+    if "markdown" in research_request.report_formats:
+        report_output["md_path"] = await write_text_to_md(report_information[0], research_id)
+    if "docx" in research_request.report_formats:
+        report_output["docx_path"] = await write_md_to_word(report_information[0], research_id)
+    if "pdf" in research_request.report_formats:
+        report_output["pdf_path"] = await write_md_to_pdf(report_information[0], research_id)
+
     if research_request.report_type != "multi_agents":
         report, researcher = report_information
         response = {
@@ -151,17 +159,16 @@ async def write_report(research_request: ResearchRequest, research_id: str = Non
                 # "research_sources": researcher.get_research_sources(),  # Raw content of sources may be very large
             },
             "report": report,
-            "docx_path": docx_path,
-            "pdf_path": pdf_path
+            **report_output
         }
     else:
-        response = { "research_id": research_id, "report": "", "docx_path": docx_path, "pdf_path": pdf_path }
+        response = { "research_id": research_id, "report": "", **report_output}
 
     return response
 
 @app.post("/report/")
 async def generate_report(research_request: ResearchRequest, background_tasks: BackgroundTasks):
-    research_id = sanitize_filename(f"task_{int(time.time())}_{research_request.task}")
+    research_id = sanitize_filename(f"task_{int(time.time())}_{research_request.task[:60]}")
 
     if research_request.generate_in_background:
         background_tasks.add_task(write_report, research_request=research_request, research_id=research_id)
