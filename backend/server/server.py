@@ -52,7 +52,7 @@ class ResearchRequest(BaseModel):
     branch_name: str
     generate_in_background: bool = True
     report_formats: List[str] = ["markdown"]
-    report_formats: List[str] = ["markdown"]
+    filename: str | None = None
 
 
 class ConfigRequest(BaseModel):
@@ -168,7 +168,10 @@ async def write_report(research_request: ResearchRequest, research_id: str = Non
 
 @app.post("/report/")
 async def generate_report(research_request: ResearchRequest, background_tasks: BackgroundTasks):
-    research_id = sanitize_filename(f"task_{int(time.time())}_{research_request.task[:60]}")
+    if research_request.filename:
+        research_id = sanitize_filename(research_request.filename)
+    else:
+        research_id = sanitize_filename(f"task_{int(time.time())}_{research_request.task[:60]}")
 
     if research_request.generate_in_background:
         background_tasks.add_task(write_report, research_request=research_request, research_id=research_id)

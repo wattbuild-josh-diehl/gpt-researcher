@@ -102,28 +102,39 @@ class Researcher:
         }
 
 def sanitize_filename(filename: str) -> str:
-    # Split into components
-    prefix, timestamp, *task_parts = filename.split('_')
-    task = '_'.join(task_parts)
+    """
+    Sanitizes a filename to be safe for use on filesystems.
+    Handles both auto-generated and user-provided filenames.
+    """
+    if filename.startswith("task_") and "_" in filename:
+        try:
+            # Handle auto-generated filenames
+            prefix, timestamp, *task_parts = filename.split('_')
+            task = '_'.join(task_parts)
+            
+            # Basic sanitization for the task part
+            sanitized_task = re.sub(r'[^\w-]', '', task).strip()
+            
+            # Truncate if necessary (this is a simplified approach)
+            max_len = 100
+            if len(sanitized_task) > max_len:
+                sanitized_task = sanitized_task[:max_len]
+            
+            return f"{prefix}_{timestamp}_{sanitized_task}"
+        except ValueError:
+            # Fallback for unexpected formats
+            pass
     
-    # Calculate max length for task portion
-    # 255 - len(os.getcwd()) - len("\\gpt-researcher\\outputs\\") - len("task_") - len(timestamp) - len("_.json") - safety_margin
-    max_task_length = 255 - len(os.getcwd()) - 24 - 5 - 10 - 6 - 5  # ~189 chars for task
+    # Handle user-provided filenames or fallbacks
+    # Remove path components and invalid characters
+    base_filename = os.path.basename(filename)
+    sanitized_filename = re.sub(r'[^\w.-]', '', base_filename).strip()
     
-    # Truncate task if needed (by bytes)
-    truncated_task = ""
-    byte_count = 0
-    for char in task:
-        char_bytes = len(char.encode('utf-8'))
-        if byte_count + char_bytes <= max_task_length:
-            truncated_task += char
-            byte_count += char_bytes
-        else:
-            break
-
-    # Reassemble and clean the filename
-    sanitized = f"{prefix}_{timestamp}_{truncated_task}"
-    return re.sub(r"[^\w-]", "", sanitized).strip()
+    # Ensure it's not empty
+    if not sanitized_filename:
+        return f"sanitized_report_{int(time.time())}"
+        
+    return sanitized_filename
 
 
 async def handle_start_command(websocket, data: str, manager):
