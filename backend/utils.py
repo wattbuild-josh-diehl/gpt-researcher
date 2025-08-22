@@ -28,7 +28,10 @@ async def write_text_to_md(text: str, filename: str = "") -> str:
     Returns:
         str: The file path of the generated Markdown file.
     """
-    file_path = f"outputs/{filename[:60]}.md"
+    filename = filename[:60]
+    file_path = f"outputs/{filename}"
+    if not file_path.endswith(".md"):
+        file_path += ".md"
     await write_to_file(file_path, text)
     return urllib.parse.quote(file_path)
 
@@ -41,7 +44,10 @@ async def write_md_to_pdf(text: str, filename: str = "") -> str:
     Returns:
         str: The encoded file path of the generated PDF.
     """
-    file_path = f"outputs/{filename[:60]}.pdf"
+    filename = filename[:60]
+    file_path = f"outputs/{filename}"
+    if not file_path.endswith(".pdf"):
+        file_path += ".pdf"
 
     try:
         from md2pdf.core import md2pdf
@@ -67,7 +73,10 @@ async def write_md_to_word(text: str, filename: str = "") -> str:
     Returns:
         str: The encoded file path of the generated DOCX.
     """
-    file_path = f"outputs/{filename[:60]}.docx"
+    filename = filename[:60]
+    file_path = f"outputs/{filename}"
+    if not file_path.endswith(".docx"):
+        file_path += ".docx"
 
     try:
         from docx import Document
