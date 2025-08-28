@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import tempfile
 from urllib.parse import urlparse
@@ -44,15 +45,28 @@ class PyMuPDFScraper:
                 response = requests.get(self.link, timeout=5, stream=True)
                 response.raise_for_status()
 
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-                    temp_filename = temp_file.name  # Get the temporary file name
-                    for chunk in response.iter_content(chunk_size=8192):
-                        temp_file.write(chunk)  # Write the downloaded content to the temporary file
+                # Create a directory to store scraped sites if it doesn't exist
+                output_dir = "outputs/scraped_sites"
+                os.makedirs(output_dir, exist_ok=True)
 
-                loader = PyMuPDFLoader(temp_filename)
+                # Sanitize the URL to create a valid filename
+                parsed_url = urlparse(self.link)
+                filename = f"{parsed_url.netloc.replace('.', '_')}_{parsed_url.path.replace('/', '_')}"
+                filename = re.sub(r'_+', '_', filename).strip('_')
+                
+                # Ensure the filename ends with .pdf
+                if not filename.endswith('.pdf'):
+                    filename += '.pdf'
+
+                # Save the raw PDF content
+                filepath = os.path.join(output_dir, filename)
+                with open(filepath, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+                loader = PyMuPDFLoader(filepath)
                 doc = loader.load()
 
-                os.remove(temp_filename)
             else:
                 loader = PyMuPDFLoader(self.link)
                 doc = loader.load()
