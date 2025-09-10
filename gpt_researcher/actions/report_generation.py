@@ -17,6 +17,7 @@ async def write_report_introduction(
     websocket=None,
     cost_callback: callable = None,
     prompt_family: type[PromptFamily] | PromptFamily = PromptFamily,
+    tone=None,
     **kwargs
 ) -> str:
     """
@@ -42,7 +43,9 @@ async def write_report_introduction(
                 {"role": "user", "content": prompt_family.generate_report_introduction(
                     question=query,
                     research_summary=context,
-                    language=config.language
+                    language=config.language,
+                    report_format=config.report_format,
+                    tone=tone
                 )},
             ],
             temperature=0.25,
@@ -68,6 +71,7 @@ async def write_conclusion(
     websocket=None,
     cost_callback: callable = None,
     prompt_family: type[PromptFamily] | PromptFamily = PromptFamily,
+    tone=None,
     **kwargs
 ) -> str:
     """
@@ -94,7 +98,9 @@ async def write_conclusion(
                     "role": "user",
                     "content": prompt_family.generate_report_conclusion(query=query,
                                                                         report_content=context,
-                                                                        language=config.language),
+                                                                        language=config.language,
+                                                                        report_format=config.report_format,
+                                                                        tone=tone),
                 },
             ],
             temperature=0.25,
@@ -211,7 +217,7 @@ async def generate_report(
     context,
     agent_role_prompt: str,
     report_type: str,
-    tone: Tone,
+    tone: str,
     report_source: str,
     websocket,
     cfg,

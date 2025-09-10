@@ -192,7 +192,12 @@ eg: Author, A. A. (Year, Month Date). Title of web page. Website Name. [url webs
 You MUST write all used source document names at the end of the report as references, and make sure to not add duplicated sources, but only one reference for each."
 """
 
-        tone_prompt = f"Write the report in a {tone.value} tone." if tone else ""
+        if isinstance(tone, Tone):
+            tone_prompt = f"Write the report in a {tone.value} tone."
+        elif isinstance(tone, str) and tone:
+            tone_prompt = tone
+        else:
+            tone_prompt = ""
 
         return f"""
 Information: "{context}"
@@ -354,7 +359,12 @@ eg: Author, A. A. (Year, Month Date). Title of web page. Website Name. [url webs
 You MUST write all used source document names at the end of the report as references, and make sure to not add duplicated sources, but only one reference for each."
 """
 
-        tone_prompt = f"Write the report in a {tone.value} tone." if tone else ""
+        if isinstance(tone, Tone):
+            tone_prompt = f"Write the report in a {tone.value} tone."
+        elif isinstance(tone, str) and tone:
+            tone_prompt = tone
+        else:
+            tone_prompt = ""
 
         return f"""
 Using the following hierarchically researched information and citations:
@@ -483,9 +493,15 @@ and research data:
         report_format: str = "apa",
         max_subsections=5,
         total_words=800,
-        tone: Tone = Tone.Objective,
+        tone=Tone.Objective,
         language: str = "english",
     ) -> str:
+        if isinstance(tone, Tone):
+            tone_instruction = f"- Use an {tone.value} tone throughout the report."
+        elif isinstance(tone, str) and tone:
+            tone_instruction = tone
+        else:
+            tone_instruction = ""
         return f"""
 Context:
 "{context}"
@@ -545,7 +561,7 @@ Assume the current date is {datetime.now(timezone.utc).strftime('%B %d, %Y')} if
 - You MUST use in-text citation references in {report_format.upper()} format and make it with markdown hyperlink placed at the end of the sentence or paragraph that references them like this: ([in-text citation](url)).
 - You MUST mention the difference between the existing content and the new content in the report if you are adding the similar or same subsections wherever necessary.
 - The report should have a minimum length of {total_words} words.
-- Use an {tone.value} tone throughout the report.
+{tone_instruction}
 
 Do NOT add a conclusion section.
 """
@@ -585,20 +601,29 @@ Provide the draft headers in a list format using markdown syntax, for example:
 """
 
     @staticmethod
-    def generate_report_introduction(question: str, research_summary: str = "", language: str = "english", report_format: str = "apa") -> str:
+    def generate_report_introduction(question: str, research_summary: str = "", language: str = "english", report_format: str = "apa", tone=None) -> str:
+        # Generate tone instruction for introduction
+        tone_instruction = ""
+        if tone:
+            if hasattr(tone, 'value'):
+                tone_instruction = f"- Write the introduction in a {tone.value} tone."
+            elif isinstance(tone, str):
+                tone_instruction = f"- Write the introduction in a {tone} tone."
+        
         return f"""{research_summary}\n
 Using the above latest information, Prepare a detailed report introduction on the topic -- {question}.
 - The introduction should be succinct, well-structured, informative with markdown syntax.
 - As this introduction will be part of a larger report, do NOT include any other sections, which are generally present in a report.
 - The introduction should be preceded by an H1 heading with a suitable topic for the entire report.
 - You must use in-text citation references in {report_format.upper()} format and make it with markdown hyperlink placed at the end of the sentence or paragraph that references them like this: ([in-text citation](url)).
+{tone_instruction}
 Assume that the current date is {datetime.now(timezone.utc).strftime('%B %d, %Y')} if required.
 - The output must be in {language} language.
 """
 
 
     @staticmethod
-    def generate_report_conclusion(query: str, report_content: str, language: str = "english", report_format: str = "apa") -> str:
+    def generate_report_conclusion(query: str, report_content: str, language: str = "english", report_format: str = "apa", tone=None) -> str:
         """
         Generate a concise conclusion summarizing the main findings and implications of a research report.
 
@@ -606,10 +631,20 @@ Assume that the current date is {datetime.now(timezone.utc).strftime('%B %d, %Y'
             query (str): The research task or question.
             report_content (str): The content of the research report.
             language (str): The language in which the conclusion should be written.
+            report_format (str): The report format (e.g., APA).
+            tone: The tone to use in writing the conclusion.
 
         Returns:
             str: A concise conclusion summarizing the report's main findings and implications.
         """
+        # Generate tone instruction for conclusion
+        tone_instruction = ""
+        if tone:
+            if hasattr(tone, 'value'):
+                tone_instruction = f"Write the conclusion in a {tone.value} tone."
+            elif isinstance(tone, str):
+                tone_instruction = f"Write the conclusion in a {tone} tone."
+        
         prompt = f"""
     Based on the research report below and research task, please write a concise conclusion that summarizes the main findings and their implications:
 
@@ -625,6 +660,7 @@ Assume that the current date is {datetime.now(timezone.utc).strftime('%B %d, %Y'
 
     If there is no "## Conclusion" section title written at the end of the report, please add it to the top of your conclusion.
     You must use in-text citation references in {report_format.upper()} format and make it with markdown hyperlink placed at the end of the sentence or paragraph that references them like this: ([in-text citation](url)).
+    {tone_instruction}
 
     IMPORTANT: The entire conclusion MUST be written in {language} language.
 

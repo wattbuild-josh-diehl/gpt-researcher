@@ -113,6 +113,7 @@ class ReportGenerator:
             cost_callback=self.researcher.add_costs,
             websocket=self.researcher.websocket,
             prompt_family=self.researcher.prompt_family,
+            tone=self.researcher.tone,  # Pass tone parameter to conclusion generation
             **self.researcher.kwargs
         )
 
@@ -144,6 +145,7 @@ class ReportGenerator:
             websocket=self.researcher.websocket,
             cost_callback=self.researcher.add_costs,
             prompt_family=self.researcher.prompt_family,
+            tone=self.researcher.tone,  # Pass tone parameter to introduction generation
             **self.researcher.kwargs
         )
 

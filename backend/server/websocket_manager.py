@@ -76,7 +76,6 @@ class WebSocketManager:
 
     async def start_streaming(self, task, report_type, report_source, source_urls, document_urls, tone, websocket, headers=None, query_domains=[], mcp_enabled=False, mcp_strategy="fast", mcp_configs=[]):
         """Start streaming the output."""
-        tone = Tone[tone]
         # add customized JSON config file path here
         config_path = "default"
         
@@ -98,7 +97,7 @@ class WebSocketManager:
         else:
             await websocket.send_json({"type": "chat", "content": "Knowledge empty, please run the research first to obtain knowledge"})
 
-async def run_agent(task, report_type, report_source, source_urls, document_urls, tone: Tone, websocket, stream_output=stream_output, headers=None, query_domains=[], config_path="", return_researcher=False, mcp_enabled=False, mcp_strategy="fast", mcp_configs=[]):
+async def run_agent(task, report_type, report_source, source_urls, document_urls, tone: str, websocket, stream_output=stream_output, headers=None, query_domains=[], config_path="", return_researcher=False, mcp_enabled=False, mcp_strategy="fast", mcp_configs=[]):
     """Run the agent."""    
     # Create logs handler for this research task
     logs_handler = CustomLogsHandler(websocket, task)
