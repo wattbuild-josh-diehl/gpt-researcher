@@ -97,7 +97,7 @@ class WebSocketManager:
 
     async def start_streaming(self, task, report_type, report_source, source_urls, document_urls, tone, websocket, headers=None, query_domains=[], mcp_enabled=False, mcp_strategy="fast", mcp_configs=[]):
         """Start streaming the output."""
-        tone = Tone[tone]
+        tone = Tone[tone] if tone in Tone.__members__ else tone
         # add customized JSON config file path here
         config_path = "default"
 
