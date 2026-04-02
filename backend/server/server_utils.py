@@ -111,14 +111,27 @@ class Researcher:
         }
 
 def sanitize_filename(filename: str) -> str:
-    # Split into components
-    prefix, timestamp, *task_parts = filename.split('_')
-    task = '_'.join(task_parts)
-    task_hash = hashlib.md5(task.encode('utf-8', errors='ignore')).hexdigest()[:10]
-            
-    # Reassemble and clean the filename
-    sanitized = f"{prefix}_{timestamp}_{task_hash}"
-    return re.sub(r"[^\w\s-]", "", sanitized).strip()
+    """
+    Sanitizes a filename to be safe for use on filesystems.
+    Handles both auto-generated and user-provided filenames.
+    """
+    if filename.startswith("task_") and "_" in filename:
+        try:
+            prefix, timestamp, *task_parts = filename.split('_')
+            task = '_'.join(task_parts)
+            task_hash = hashlib.md5(task.encode('utf-8', errors='ignore')).hexdigest()[:10]
+            return re.sub(r"[^\w\s-]", "", f"{prefix}_{timestamp}_{task_hash}").strip()
+        except ValueError:
+            pass
+
+    # Handle user-provided filenames
+    base_filename = os.path.basename(filename)
+    sanitized_filename = re.sub(r'[^\w.-]', '', base_filename).strip()
+
+    if not sanitized_filename:
+        return f"sanitized_report_{int(time.time())}"
+
+    return sanitized_filename
 
 
 async def handle_start_command(websocket, data: str, manager):
